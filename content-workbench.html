@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>马修遇见美 · IP 内容工作台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;}
+body{background:#0f0f13;color:#e8e8ed;min-height:100vh;display:flex;}
+
+/* ========== 侧边导航 ========== */
+.sidebar{width:200px;background:#1a1a24;border-right:1px solid #2a2a36;display:flex;flex-direction:column;padding:20px 0;flex-shrink:0;}
+.sidebar .brand{padding:0 20px 20px;font-size:16px;font-weight:700;background:linear-gradient(135deg,#c084fc,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.sidebar .brand small{display:block;font-size:10px;font-weight:400;background:none;-webkit-text-fill-color:#666;margin-top:2px;}
+.sidebar nav{flex:1;}
+.sidebar nav a{display:flex;align-items:center;gap:10px;padding:10px 20px;color:#888;text-decoration:none;font-size:13px;border-radius:0 20px 20px 0;margin:2px 0;transition:all .15s;}
+.sidebar nav a:hover,.sidebar nav a.active{background:#2a2a36;color:#e8e8ed;}
+.sidebar nav a.active{background:linear-gradient(90deg,#2a1f4a,transparent);color:#c084fc;border-left:3px solid #c084fc;}
+
+/* ========== 主内容 ========== */
+.main{flex:1;padding:24px;overflow-y:auto;max-height:100vh;}
+
+/* Tab 页 */
+.tab-page{display:none;}
+.tab-page.active{display:block;}
+
+/* 头部 */
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.page-header h2{font-size:20px;font-weight:700;}
+.page-header .badge{background:#2a2a36;padding:4px 12px;border-radius:20px;font-size:12px;color:#999;}
+
+/* 按钮 */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:10px;border:none;font-size:13px;cursor:pointer;transition:all .15s;}
+.btn-primary{background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;}
+.btn-primary:hover{filter:brightness(1.15);}
+.btn-sm{padding:5px 12px;font-size:12px;}
+.btn-outline{background:transparent;border:1px solid #333;color:#999;}
+.btn-outline:hover{border-color:#666;color:#e8e8ed;}
+.btn-danger{background:#dc2626;color:#fff;}
+.btn-danger:hover{background:#b91c1c;}
+
+/* 卡片 */
+.card{background:#1a1a24;border-radius:14px;padding:18px;border:1px solid #2a2a36;margin-bottom:14px;}
+.card h3{font-size:14px;font-weight:600;margin-bottom:12px;color:#c4b5fd;display:flex;align-items:center;gap:8px;}
+
+/* 指标行 */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px;}
+.metric{background:#1a1a24;border-radius:12px;padding:14px;text-align:center;border:1px solid #2a2a36;}
+.metric .label{font-size:11px;color:#666;margin-bottom:4px;}
+.metric .value{font-size:22px;font-weight:700;line-height:1.3;}
+.metric .change{font-size:11px;margin-top:2px;}
+.up{color:#34d399;}
+.down{color:#f87171;}
+
+/* 表格 */
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{color:#666;font-weight:500;padding:8px 6px;text-align:left;border-bottom:1px solid #2a2a36;}
+td{padding:8px 6px;border-bottom:1px solid #1f1f2a;}
+
+/* ===== 选题池 ===== */
+.topic-form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.topic-form input,.topic-form select{background:#0f0f13;border:1px solid #2a2a36;border-radius:8px;padding:8px 12px;color:#e8e8ed;font-size:13px;flex:1;min-width:140px;}
+.topic-form input:focus,.topic-form select:focus{outline:none;border-color:#7c3aed;}
+.topic-list{display:flex;flex-direction:column;gap:6px;}
+.topic-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#0f0f13;border-radius:10px;border:1px solid #2a2a36;}
+.topic-item .pri{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.pri-high{background:#f87171;}
+.pri-mid{background:#fbbf24;}
+.pri-low{background:#6b7280;}
+.topic-item .title{flex:1;font-size:13px;}
+.topic-item .status{font-size:11px;padding:2px 10px;border-radius:10px;}
+.ts-planned{background:#1e3a5f;color:#60a5fa;}
+.ts-shooting{background:#5f371e;color:#fb923c;}
+.ts-cutting{background:#3b1e5f;color:#c084fc;}
+.ts-reviewing{background:#1e5f3b;color:#34d399;}
+.ts-done{background:#2a2a36;color:#666;}
+.topic-item .actions{display:flex;gap:4px;}
+.topic-item .actions button{background:none;border:none;color:#666;cursor:pointer;padding:2px 4px;font-size:14px;}
+.topic-item .actions button:hover{color:#e8e8ed;}
+
+/* ===== 内容管线 - 看板 ===== */
+.kanban{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;overflow-x:auto;}
+@media(max-width:900px){.kanban{grid-template-columns:repeat(2,1fr);}}
+.kanban-col{background:#0f0f13;border-radius:12px;padding:12px;border:1px solid #2a2a36;min-height:180px;}
+.kanban-col .col-title{font-size:12px;font-weight:600;color:#888;margin-bottom:10px;text-align:center;}
+.kanban-item{background:#1a1a24;border-radius:8px;padding:10px;margin-bottom:6px;border:1px solid #2a2a36;cursor:grab;}
+.kanban-item .ki-title{font-size:12px;font-weight:500;margin-bottom:4px;}
+.kanban-item .ki-meta{font-size:10px;color:#666;display:flex;gap:6px;flex-wrap:wrap;}
+
+/* ===== 日历简表 ===== */
+.calendar-mini{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:11px;}
+.calendar-mini .day{padding:6px 2px;border-radius:6px;color:#666;}
+.calendar-mini .day.has{background:#2a1f4a;color:#c084fc;font-weight:600;}
+.calendar-mini .day.today{background:#7c3aed;color:#fff;font-weight:700;}
+.calendar-mini .weekday{color:#444;font-size:10px;padding:4px 0;}
+
+/* 来源分布 min-bar */
+.source-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin:8px 0;}
+.source-bar .seg{height:100%;}
+.source-bar .seg:nth-child(1){background:#7c3aed;}
+.source-bar .seg:nth-child(2){background:#6366f1;}
+.source-bar .seg:nth-child(3){background:#f59e0b;}
+.source-bar .seg:nth-child(4){background:#34d399;}
+.source-bar .seg:nth-child(5){background:#ec4899;}
+.source-bar .seg:nth-child(6){background:#06b6d4;}
+.source-bar .seg:nth-child(7){background:#6b7280;}
+
+.legend{display:flex;flex-wrap:wrap;gap:8px;font-size:10px;color:#888;margin-top:6px;}
+.legend span{display:flex;align-items:center;gap:4px;}
+.legend .dot{width:8px;height:8px;border-radius:50%;}
+
+
+/* ===== 复盘建议 ===== */
+.review-score{font-size:48px;font-weight:800;background:linear-gradient(135deg,#c084fc,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;}
+.review-badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600;}
+.review-badge.green{background:#065f46;color:#6ee7b7;}
+.review-badge.red{background:#7f1d1d;color:#fca5a5;}
+.review-badge.yellow{background:#5c3d0e;color:#fcd34d;}
+.funnel{display:flex;flex-direction:column;gap:3px;padding:10px 0;}
+.funnel-row{display:flex;align-items:center;gap:10px;font-size:12px;}
+.funnel-bar{height:20px;border-radius:4px;background:linear-gradient(90deg,#4f46e5,#7c3aed);display:flex;align-items:center;padding:0 8px;color:#fff;font-size:10px;font-weight:600;min-width:30px;}
+.funnel-bar.warn{background:linear-gradient(90deg,#dc2626,#f87171);}
+.funnel-bar.ok{background:linear-gradient(90deg,#059669,#34d399);}
+.funnel-bar.great{background:linear-gradient(90deg,#7c3aed,#c084fc);}
+.advice-card{background:#0f0f13;border-radius:10px;padding:12px 14px;margin-bottom:8px;border-left:3px solid;}
+.advice-card.p0{border-left-color:#f87171;}
+.advice-card.p1{border-left-color:#fbbf24;}
+.advice-card.p2{border-left-color:#6b7280;}
+.advice-card .tag{display:inline-block;padding:1px 8px;border-radius:6px;font-size:10px;font-weight:600;margin-right:6px;}
+.advice-card .tag.p0{background:#7f1d1d;color:#fca5a5;}
+.advice-card .tag.p1{background:#5c3d0e;color:#fcd34d;}
+.advice-card .tag.p2{background:#1f2937;color:#9ca3af;}
+.advice-card h4{font-size:13px;margin-bottom:4px;}
+.advice-card p{font-size:12px;color:#888;line-height:1.5;}
+.advice-card .action-btn{display:inline-block;margin-top:6px;padding:4px 12px;background:#2a2a3e;border-radius:6px;font-size:11px;color:#a5b4fc;text-decoration:none;}
+
+@media(max-width:600px){
+  .sidebar{display:none;}
+  .main{padding:14px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 侧边栏 ===== -->
+<div class="sidebar">
+  <div class="brand">🎬 内容工作台<small>马修遇见美</small></div>
+  <nav>
+    <a href="#" data-tab="dashboard" class="active">📊 总览</a>
+    <a href="#" data-tab="topics">📋 选题池</a>
+    <a href="#" data-tab="pipeline">🎞️ 内容管线</a>
+    <a href="#" data-tab="calendar">📅 内容日历</a>
+    <a href="#" data-tab="data">📈 数据中心</a>
+    <a href="#" data-tab="paste">📥 更新数据</a>
+    <a href="#" data-tab="review"><span style="font-size:16px;">🔍</span> 复盘建议</a>
+
+  </nav>
+  <div style="padding:10px 20px;border-top:1px solid #2a2a36;font-size:11px;color:#444;margin-top:auto;">
+    视频号ID: sphBO9B5KbcyyTd
+  </div>
+</div>
+
+<!-- ===== 主内容 ===== -->
+<div class="main" id="app">
+
+  <!-- ====== TAB: 总览 ====== -->
+  <div class="tab-page active" id="tab-dashboard">
+    <div class="page-header">
+      <h2>📊 工作台总览</h2>
+      <span class="badge">📅 06-06 至 07-05</span>
+    </div>
+
+    <!-- 快捷指标 -->
+    <div class="metrics">
+      <div class="metric"><div class="label">选题池</div><div class="value" id="m-topic-count" style="color:#c084fc;">0</div></div>
+      <div class="metric"><div class="label">拍摄中</div><div class="value" id="m-shooting-count" style="color:#fb923c;">0</div></div>
+      <div class="metric"><div class="label">待发布</div><div class="value" id="m-review-count" style="color:#34d399;">0</div></div>
+      <div class="metric"><div class="label">30天播放</div><div class="value" style="color:#818cf8;">2.9万</div><div class="change down">↓ 23.88%</div></div>
+      <div class="metric"><div class="label">30天关注</div><div class="value" style="color:#f472b6;">53</div><div class="change up">↑ 51.42%</div></div>
+    </div>
+
+    <!-- 昨日数据 -->
+    <div class="card">
+      <h3>昨日数据 · 07/06</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:13px;">
+        <span>播放 <b style="color:#818cf8;">902</b></span>
+        <span>点赞 <b style="color:#fbbf24;">5</b></span>
+        <span>评论 <b style="color:#f87171;">3</b></span>
+        <span>分享 <b style="color:#60a5fa;">0</b></span>
+        <span>关注 <b style="color:#f472b6;">4</b></span>
+      </div>
+    </div>
+
+    <!-- 来源分布 -->
+    <div class="card">
+      <h3>📊 来源分布（近7天）</h3>
+      <div class="source-bar"><div class="seg" style="width:10%"></div><div class="seg" style="width:5%"></div><div class="seg" style="width:42%"></div><div class="seg" style="width:14%"></div><div class="seg" style="width:8%"></div><div class="seg" style="width:15%"></div><div class="seg" style="width:6%"></div></div>
+      <div class="legend">
+        <span><span class="dot" style="background:#7c3aed;"></span>关注 10%</span>
+        <span><span class="dot" style="background:#6366f1;"></span>朋友 5%</span>
+        <span><span class="dot" style="background:#f59e0b;"></span>推荐 42%</span>
+        <span><span class="dot" style="background:#34d399;"></span>分享 14%</span>
+        <span><span class="dot" style="background:#ec4899;"></span>订阅号 8%</span>
+        <span><span class="dot" style="background:#06b6d4;"></span>主页 15%</span>
+        <span><span class="dot" style="background:#6b7280;"></span>其他 6%</span>
+      </div>
+    </div>
+
+    <!-- 近期内容动态 -->
+    <div class="card">
+      <h3>📌 待办 · 近期内容</h3>
+      <table>
+        <thead><tr><th>内容</th><th>状态</th><th>优先级</th><th>计划日期</th></tr></thead>
+        <tbody id="recent-topics"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ====== TAB: 选题池 ====== -->
+  <div class="tab-page" id="tab-topics">
+    <div class="page-header">
+      <h2>📋 选题池</h2>
+      <span class="badge" id="topic-count-badge">共 0 个</span>
+    </div>
+
+    <div class="topic-form">
+      <input type="text" id="tp-title" placeholder="选题名称…" />
+      <select id="tp-priority"><option value="high">🔴 高优先级</option><option value="mid" selected>🟡 中优先级</option><option value="low">⚪ 低优先级</option></select>
+      <select id="tp-category"><option>穿搭</option><option>护肤</option><option>生活方式</option><option>探店</option><option>好物</option><option>其他</option></select>
+      <button class="btn btn-primary" onclick="addTopic()">+ 添加选题</button>
+    </div>
+
+    <!-- 筛选 -->
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <select id="filter-status" onchange="renderTopics()" style="background:#0f0f13;border:1px solid #2a2a36;border-radius:8px;padding:6px 10px;color:#e8e8ed;font-size:12px;">
+        <option value="all">全部状态</option>
+        <option value="planned">待规划</option>
+        <option value="shooting">拍摄中</option>
+        <option value="cutting">剪辑中</option>
+        <option value="reviewing">待发布</option>
+        <option value="done">已发布</option>
+      </select>
+      <select id="filter-priority" onchange="renderTopics()" style="background:#0f0f13;border:1px solid #2a2a36;border-radius:8px;padding:6px 10px;color:#e8e8ed;font-size:12px;">
+        <option value="all">全部优先级</option>
+        <option value="high">高</option>
+        <option value="mid">中</option>
+        <option value="low">低</option>
+      </select>
+    </div>
+
+    <div class="topic-list" id="topic-list"></div>
+  </div>
+
+  <!-- ====== TAB: 内容管线 ====== -->
+  <div class="tab-page" id="tab-pipeline">
+    <div class="page-header">
+      <h2>🎞️ 内容管线</h2>
+      <span class="badge">拖拽可变更状态</span>
+    </div>
+
+    <div class="kanban" id="kanban">
+      <div class="kanban-col" data-status="planned"><div class="col-title">📋 待规划</div><div class="kanban-items" data-status="planned"></div></div>
+      <div class="kanban-col" data-status="shooting"><div class="col-title">🎬 拍摄中</div><div class="kanban-items" data-status="shooting"></div></div>
+      <div class="kanban-col" data-status="cutting"><div class="col-title">✂️ 剪辑中</div><div class="kanban-items" data-status="cutting"></div></div>
+      <div class="kanban-col" data-status="reviewing"><div class="col-title">✅ 待发布</div><div class="kanban-items" data-status="reviewing"></div></div>
+      <div class="kanban-col" data-status="done"><div class="col-title">🚀 已发布</div><div class="kanban-items" data-status="done"></div></div>
+    </div>
+  </div>
+
+  <!-- ====== TAB: 内容日历 ====== -->
+  <div class="tab-page" id="tab-calendar">
+    <div class="page-header">
+      <h2>📅 内容日历</h2>
+      <span class="badge" id="cal-month-label">2026年7月</span>
+    </div>
+    <div class="card">
+      <h3>发布计划</h3>
+      <div class="calendar-mini" id="calendar-grid"></div>
+    </div>
+    <div class="card">
+      <h3>📌 已排期内容</h3>
+      <table>
+        <thead><tr><th>日期</th><th>内容</th><th>状态</th></tr></thead>
+        <tbody id="calendar-list"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ====== TAB: 数据中心 ====== -->
+  <div class="tab-page" id="tab-data">
+    <div class="page-header">
+      <h2>📈 数据中心</h2>
+      <span class="badge">30天数据复盘</span>
+    </div>
+
+    <div class="card">
+      <h3>📊 数据总览</h3>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:12px 0;">
+        <div style="background:#1a1a2e;border-radius:10px;padding:12px;text-align:center;">
+          <div style="color:#818cf8;font-size:22px;font-weight:bold;" id="card-total-play">0</div>
+          <div style="color:#888;font-size:12px;margin-top:4px;">总播放</div>
+        </div>
+        <div style="background:#1a1a2e;border-radius:10px;padding:12px;text-align:center;">
+          <div style="color:#818cf8;font-size:22px;font-weight:bold;" id="card-avg-play">0</div>
+          <div style="color:#888;font-size:12px;margin-top:4px;">日均播放</div>
+        </div>
+        <div style="background:#1a1a2e;border-radius:10px;padding:12px;text-align:center;">
+          <div style="color:#fbbf24;font-size:22px;font-weight:bold;" id="card-total-like">0</div>
+          <div style="color:#888;font-size:12px;margin-top:4px;">总点赞</div>
+        </div>
+        <div style="background:#1a1a2e;border-radius:10px;padding:12px;text-align:center;">
+          <div style="color:#60a5fa;font-size:22px;font-weight:bold;" id="card-total-share">0</div>
+          <div style="color:#888;font-size:12px;margin-top:4px;">总分享</div>
+        </div>
+        <div style="background:#1a1a2e;border-radius:10px;padding:12px;text-align:center;">
+          <div style="color:#f472b6;font-size:22px;font-weight:bold;" id="card-total-follow">0</div>
+          <div style="color:#888;font-size:12px;margin-top:4px;">总关注</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📅 每日明细</h3>
+      <table>
+        <thead><tr><th>日期</th><th>播放</th><th>点赞</th><th>评论</th><th>分享</th><th>关注</th></tr></thead>
+        <tbody id="data-table"></tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:8px;">
+      <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;">📥 粘贴最新数据</h3>
+        <span style="color:#888;font-size:12px;">从视频号助手复制后粘到这里</span>
+      </div>
+      <p style="color:#888;font-size:13px;margin:8px 0;">
+        在视频号助手页面按 <code style="background:#2a2a3e;padding:2px 8px;border-radius:4px;">F12</code> → Console → 粘贴以下代码并回车：
+      </p>
+      <pre style="background:#1a1a2e;border:1px solid #2a2a3e;border-radius:8px;padding:12px;font-size:12px;color:#a5b4fc;overflow-x:auto;white-space:pre-wrap;word-break:break-all;user-select:all;">copy(JSON.stringify([...document.querySelectorAll('table')].map(t=>({cols:[...t.querySelectorAll('th')].map(h=>h.innerText),rows:[...t.querySelectorAll('tr')].slice(1).map(r=>[...r.querySelectorAll('td')].map(d=>d.innerText))}))))
+      </code></pre>
+      <textarea id="paste-data-input" placeholder="粘贴从视频号助手复制的数据..." style="width:100%;background:#1a1a2e;border:1px solid #2a2a3e;border-radius:8px;padding:12px;color:#ddd;font-size:13px;min-height:80px;resize:vertical;font-family:monospace;box-sizing:border-box;margin:8px 0;"></textarea>
+      <div style="display:flex;gap:8px;">
+        <button onclick="applyPastedData()" style="background:#4f46e5;color:#fff;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-size:14px;">📊 更新数据</button>
+        <button onclick="document.getElementById('paste-data-input').value='';" style="background:#3a3a4e;color:#bbb;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-size:14px;">清空</button>
+      </div>
+    </div>
+
+
+  <!-- ====== TAB: 更新数据 ====== -->
+    <!-- ====== TAB: 复盘建议 ====== -->
+  <div class="tab-page" id="tab-review">
+    <div class="page-header">
+      <h2>🔍 数据复盘建议</h2>
+      <span class="badge">近7天 06/30 至 07/06</span>
+      <button class="btn btn-sm btn-outline" onclick="refreshReview()" style="margin-left:auto;">🔄 刷新复盘</button>
+    </div>
+    <div class="card" style="display:flex;gap:20px;flex-wrap:wrap;">
+      <div style="text-align:center;min-width:120px;">
+        <div class="review-score">6.5</div>
+        <div style="font-size:11px;color:#666;margin-top:4px;">/ 10 综合健康分</div>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:8px;">📈 内容质量上升，但流量承压</div>
+        <div style="font-size:12px;color:#888;line-height:1.6;">完播率0.33%，播放-49%。近7天峰值3370，最低698，波动较大。建议固定更新节奏，优化前3秒完播率。</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📊 核心指标诊断</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;">
+
+        <div style="background:#0f0f13;border-radius:10px;padding:10px;"><div style="font-size:11px;color:#888;">播放</div><div style="font-size:18px;font-weight:700;color:#818cf8;">10,310</div><div><span class="review-badge red">📉 49.1%</span></div></div>
+
+        <div style="background:#0f0f13;border-radius:10px;padding:10px;"><div style="font-size:11px;color:#888;">完播</div><div style="font-size:18px;font-weight:700;color:#34d399;">34</div><div><span class="review-badge green">0.3%完播率</span></div></div>
+
+        <div style="background:#0f0f13;border-radius:10px;padding:10px;"><div style="font-size:11px;color:#888;">分享</div><div style="font-size:18px;font-weight:700;color:#60a5fa;">215</div><div><span class="review-badge red">📉 75.7%</span></div></div>
+
+        <div style="background:#0f0f13;border-radius:10px;padding:10px;"><div style="font-size:11px;color:#888;">评论</div><div style="font-size:18px;font-weight:700;color:#f87171;">34</div><div><span class="review-badge red">📉 64.0%</span></div></div>
+
+        <div style="background:#0f0f13;border-radius:10px;padding:10px;"><div style="font-size:11px;color:#888;">点赞</div><div style="font-size:18px;font-weight:700;color:#fbbf24;">69</div><div><span class="review-badge red">📉 46.8%</span></div></div>
+
+        <div style="background:#0f0f13;border-radius:10px;padding:10px;"><div style="font-size:11px;color:#888;">关注</div><div style="font-size:18px;font-weight:700;color:#f472b6;">17</div><div><span class="review-badge red">📉 18.2%</span></div></div>
+
+      </div>
+
+      <div style="margin-top:8px;font-size:12px;color:#888;"><b>当前关注者:</b> 510 &nbsp;|&nbsp; <b>离500认证:</b> ✅ 已达成！</div>
+
+    </div>
+
+    <div class="card">
+      <h3>🔁 转化漏斗分析（近7天）</h3>
+      <div class="funnel">
+        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">曝光播放</span><div class="funnel-bar" style="width:100%;">10,310 (100%)</div></div>
+        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">→ 完播</span><div class="funnel-bar warn" style="width:3%">34 (0.33%)</div></div>
+        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">→ 点赞</span><div class="funnel-bar ok" style="width:68%">69 (203%完播后)</div></div>
+        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">→ 评论</span><div class="funnel-bar warn" style="width:33%">34 (100%完播后)</div></div>
+        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">→ 分享</span><div class="funnel-bar great" style="width:100%">215 (632%完播后)</div></div>
+        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">→ 关注</span><div class="funnel-bar warn" style="width:16%">17 (0.16%)</div></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;font-size:11px;color:#888;">
+        <span>完播后点赞率 <b style="color:#34d399;">203%</b></span>
+        <span>完播后分享率 <b style="color:#c084fc;">632%</b></span>
+        <span>完播后评论率 <b style="color:#34d399;">100%</b></span>
+        <span>关注转化率 <b style="color:#f87171;">0.16%</b></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🎯 行动建议（按优先级）</h3>
+
+      <div class="advice-card p0"><h4><span class="tag p0">P0 紧急</span> 🔎 分析爆款视频</h4><p>近7天最高单日播放3370，最低仅698，波动382%。分析爆款视频的主题、时长、开头3秒、封面风格。</p></div>
+      <div class="advice-card p0"><h4><span class="tag p0">P0 紧急</span> ⏱ 优化视频前3秒</h4><p>完播率仅0.33%，前3秒直接用强钩子：结果/问题/吸睛画面。</p></div>
+      <div class="advice-card p1"><h4><span class="tag p1">P1 重要</span> 📅 固定更新节奏</h4><p>播放从3370跌到698，建议每周至少3条，固定晚8-10点发布。</p><a href="#" class="action-btn" onclick="switchTab('calendar')">📅 去内容日历规划</a></div>
+      <div class="advice-card p1"><h4><span class="tag p1">P1 重要</span> 💬 提升评论区互动</h4><p>近7天共34条评论。视频结尾加提问 + 回复每一条。</p></div>
+      <div class="advice-card p1"><h4><span class="tag p1">P1 重要</span> 📦 做系列化内容提升关注</h4><p>做系列内容让用户产生追更欲望。</p></div>
+      <div class="advice-card p2"><h4><span class="tag p2">P2 长期</span> 🔗 发挥分享优势</h4><p>分享增长-76%！多做对比/干货/共鸣类内容，结尾引导‘@朋友’。</p></div>
+      <div class="advice-card p2"><h4><span class="tag p2">P2 长期</span> 🏠 优化个人主页</h4><p>完善简介、置顶优质视频、统一封面视觉风格。</p></div>
+      <div class="advice-card p2"><h4><span class="tag p2">P2 长期</span> 📊 每周数据监控</h4><p>定期分析趋势，用数据指导内容方向。本次更新：8天数据。</p></div>
+    </div>
+
+    <div class="card">
+      <h3>🎯 7月核心目标</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;">
+
+        <div style="background:#0f0f13;border-radius:10px;padding:12px;border-left:3px solid #fbbf24;"><div style="font-size:11px;color:#888;">7月底 · 中期</div><div style="font-size:14px;font-weight:700;margin:4px 0;">📈 月播5万+</div><div style="font-size:11px;color:#34d399;">评论破100 · 关注破600</div></div>
+        <div style="background:#0f0f13;border-radius:10px;padding:12px;border-left:3px solid #818cf8;"><div style="font-size:11px;color:#888;">3个月 · 长期</div><div style="font-size:14px;font-weight:700;margin:4px 0;">🎯 破1000关注</div><div style="font-size:11px;color:#34d399;">月播放稳定10万+</div></div>
+      </div>
+    </div>
+  </div></div>
+
+<script>
+// ========== 数据 ==========
+const TOPICS_SEED = [{"id": 12500, "title": "社交焦虑｜内向者如何建立人脉", "status": "planned", "priority": "mid", "category": "其他", "date": "2026-07-17"}, {"id": 44840, "title": "性价比超高的家居好物｜提升幸福感", "status": "planned", "priority": "mid", "category": "好物", "date": "2026-07-19"}, {"id": 75456, "title": "基础款也能穿出高级感｜白T恤的10种搭法", "status": "planned", "priority": "mid", "category": "穿搭", "date": "2026-07-09"}, {"id": 90852, "title": "城市骑行｜探索城市的新方式", "status": "planned", "priority": "mid", "category": "生活方式", "date": "2026-07-16"}, {"id": 59561, "title": "小个子穿搭显高公式｜155也能穿出170", "status": "planned", "priority": "mid", "category": "穿搭", "date": "2026-07-11"}, {"id": 15931, "title": "换季敏感肌急救指南｜精简护肤步骤", "status": "planned", "priority": "high", "category": "护肤", "date": "2026-07-08"}, {"id": 20614, "title": "香薰蜡烛合集｜小众高级香推荐", "status": "planned", "priority": "mid", "category": "好物", "date": "2026-07-19"}, {"id": 76793, "title": "新开的商场好不好逛｜购物指南", "status": "planned", "priority": "mid", "category": "探店", "date": "2026-07-15"}, {"id": 89436, "title": "不晕妆技巧｜油眼皮眼妆教程", "status": "planned", "priority": "high", "category": "美妆", "date": "2026-07-13"}, {"id": 56133, "title": "厨房好物｜懒人必备烹饪神器", "status": "planned", "priority": "low", "category": "好物", "date": "2026-07-19"}, {"id": 83161, "title": "夜市/小吃街｜本地人推荐的美食", "status": "planned", "priority": "mid", "category": "探店", "date": "2026-07-14"}, {"id": 34130, "title": "独居生活指南｜一个人住要注意什么", "status": "planned", "priority": "low", "category": "其他", "date": "2026-07-12"}, {"id": 82786, "title": "周末citywalk｜城市漫游路线推荐", "status": "planned", "priority": "mid", "category": "生活方式", "date": "2026-07-20"}, {"id": 14917, "title": "喝水打卡｜每天2L水皮肤变好了", "status": "planned", "priority": "mid", "category": "美业", "date": "2026-07-20"}, {"id": 1001, "title": "夏日通勤穿搭指南", "status": "done", "priority": "high", "category": "穿搭", "date": "2026-07-01"}, {"id": 1002, "title": "油皮夏季护肤Routine", "status": "shooting", "priority": "high", "category": "护肤", "date": "2026-07-05"}, {"id": 1003, "title": "周末探店·北京新咖啡店", "status": "cutting", "priority": "mid", "category": "探店", "date": "2026-07-08"}, {"id": 1004, "title": "我的晨间自律Vlog", "status": "reviewing", "priority": "mid", "category": "生活方式", "date": "2026-07-10"}, {"id": 1005, "title": "平价好物开箱第三期", "status": "planned", "priority": "low", "category": "好物", "date": "2026-07-15"}, {"id": 1, "title": "2026秋冬美妆趋势：裸感妆容怎么画", "status": "planned", "priority": "high", "category": "美妆", "date": "2026-07-14"}, {"id": 2, "title": "夏日防晒实测：10款热门防晒霜PK", "status": "planned", "priority": "high", "category": "护肤", "date": "2026-07-16"}, {"id": 3, "title": "早C晚A翻车自救指南｜敏感肌必看", "status": "planned", "priority": "high", "category": "护肤", "date": "2026-07-18"}, {"id": 4, "title": "30+姐姐的抗老精简护肤流程", "status": "planned", "priority": "high", "category": "护肤", "date": "2026-07-21"}, {"id": 5, "title": "油头救星！头皮护理好物测评", "status": "planned", "priority": "mid", "category": "护发", "date": "2026-07-12"}, {"id": 6, "title": "医美vs家用美容仪，到底怎么选", "status": "planned", "priority": "high", "category": "美业", "date": "2026-07-23"}, {"id": 7, "title": "高级感通勤穿搭｜一周look不重样", "status": "planned", "priority": "high", "category": "穿搭", "date": "2026-07-15"}, {"id": 8, "title": "梨形身材避雷指南｜显瘦裤子推荐", "status": "planned", "priority": "mid", "category": "穿搭", "date": "2026-07-19"}, {"id": 9, "title": "小个子女生夏日显高穿搭公式", "status": "planned", "priority": "mid", "category": "穿搭", "date": "2026-07-22"}, {"id": 10, "title": "素人改造企划：挑战1周变美计划", "status": "planned", "priority": "high", "category": "美业", "date": "2026-07-26"}, {"id": 11, "title": "上海新晋网红店打卡合集｜周末去哪儿", "status": "planned", "priority": "high", "category": "探店", "date": "2026-07-13"}, {"id": 12, "title": "月薪5000也能用的贵妇平替好物", "status": "planned", "priority": "high", "category": "好物", "date": "2026-07-17"}, {"id": 13, "title": "居家幸福感提升｜小众香薰+音响推荐", "status": "planned", "priority": "mid", "category": "生活方式", "date": "2026-07-20"}, {"id": 14, "title": "咖啡脑袋必看｜2026冷萃咖啡液测评", "status": "planned", "priority": "mid", "category": "好物", "date": "2026-07-24"}, {"id": 15, "title": "可持续时尚｜二手vintage淘货攻略", "status": "planned", "priority": "mid", "category": "生活方式", "date": "2026-07-11"}, {"id": 16, "title": "一人食·精致便当｜打工人带饭灵感", "status": "planned", "priority": "low", "category": "生活方式", "date": "2026-07-25"}, {"id": 17, "title": "宠物经济｜养猫必备智能好物推荐", "status": "planned", "priority": "mid", "category": "好物", "date": "2026-07-09"}, {"id": 18, "title": "沉浸式收纳｜衣柜换季整理全过程", "status": "planned", "priority": "low", "category": "生活方式", "date": "2026-07-27"}, {"id": 19, "title": "2026新消费趋势：情绪价值生意怎么做", "status": "planned", "priority": "high", "category": "其他", "date": "2026-07-28"}, {"id": 20, "title": "麦门信徒必看｜麦当劳隐藏菜单大公开", "status": "planned", "priority": "mid", "category": "探店", "date": "2026-07-08"}, {"id": 21, "title": "宜家平替｜淘宝9.9元收纳神器和原版对比", "status": "planned", "priority": "mid", "category": "好物", "date": "2026-07-29"}, {"id": 22, "title": "熬夜党自救｜内服外养好物清单", "status": "planned", "priority": "high", "category": "护肤", "date": "2026-07-30"}, {"id": 23, "title": "爆款预警｜近期刷屏的新消费品牌盘点", "status": "planned", "priority": "high", "category": "其他", "date": "2026-08-01"}, {"id": 24, "title": "夏日微胖穿搭｜显瘦30斤的技巧合集", "status": "planned", "priority": "high", "category": "穿搭", "date": "2026-07-10"}, {"id": 25, "title": "自己染发教程｜2026流行发色在家搞定", "status": "planned", "priority": "mid", "category": "美妆", "date": "2026-07-31"}];
+let topics = JSON.parse(localStorage.getItem('mw_topics') || '[]');
+if(topics.length===0){
+  topics = TOPICS_SEED;
+  localStorage.setItem('mw_topics',JSON.stringify(topics));
+}
+
+let dayData = JSON.parse(localStorage.getItem('mw_daydata') || '[{"d": "07/06", "p": 902, "l": 5, "c": 3, "s": 0, "f": 4}, {"d": "07/05", "p": 698, "l": 11, "c": 3, "s": 7, "f": 0}, {"d": "07/04", "p": 747, "l": 2, "c": 0, "s": 3, "f": 1}, {"d": "07/03", "p": 1377, "l": 7, "c": 3, "s": 34, "f": 4}, {"d": "07/02", "p": 1988, "l": 17, "c": 3, "s": 31, "f": 5}, {"d": "07/01", "p": 3370, "l": 14, "c": 20, "s": 105, "f": 2}, {"d": "06/30", "p": 1228, "l": 13, "c": 2, "s": 35, "f": 1}, {"d": "06/29", "p": 724, "l": 3, "c": 0, "s": 10, "f": 3}]');
+if(!dayData.length) dayData = [{"d": "07/06", "p": 902, "l": 5, "c": 3, "s": 0, "f": 4}, {"d": "07/05", "p": 698, "l": 11, "c": 3, "s": 7, "f": 0}, {"d": "07/04", "p": 747, "l": 2, "c": 0, "s": 3, "f": 1}, {"d": "07/03", "p": 1377, "l": 7, "c": 3, "s": 34, "f": 4}, {"d": "07/02", "p": 1988, "l": 17, "c": 3, "s": 31, "f": 5}, {"d": "07/01", "p": 3370, "l": 14, "c": 20, "s": 105, "f": 2}, {"d": "06/30", "p": 1228, "l": 13, "c": 2, "s": 35, "f": 1}, {"d": "06/29", "p": 724, "l": 3, "c": 0, "s": 10, "f": 3}];;
+
+const statusLabels = {planned:'待规划',shooting:'拍摄中',cutting:'剪辑中',reviewing:'待发布',done:'已发布'};
+const priLabels = {high:'🔴',mid:'🟡',low:'⚪'};
+
+// ========== 导航切换 ==========
+document.querySelectorAll('.sidebar nav a').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    document.querySelectorAll('.sidebar nav a').forEach(x=>x.classList.remove('active'));
+    a.classList.add('active');
+    document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('tab-'+a.dataset.tab).classList.add('active');
+    if(a.dataset.tab==='calendar') renderCalendar();
+  });
+});
+
+// ========== 选题 CRUD ==========
+function addTopic(){
+  const title = document.getElementById('tp-title').value.trim();
+  if(!title) return alert('请输入选题名称');
+  const priority = document.getElementById('tp-priority').value;
+  const category = document.getElementById('tp-category').value;
+  topics.push({id:Date.now(),title,status:'planned',priority,category,date:''});
+  localStorage.setItem('mw_topics',JSON.stringify(topics));
+  document.getElementById('tp-title').value='';
+  renderAll();
+}
+
+function deleteTopic(id){
+  if(!confirm('确定删除？')) return;
+  topics = topics.filter(t=>t.id!==id);
+  localStorage.setItem('mw_topics',JSON.stringify(topics));
+  renderAll();
+}
+
+function moveTopic(id,newStatus){
+  const t=topics.find(x=>x.id===id);
+  if(t){t.status=newStatus;localStorage.setItem('mw_topics',JSON.stringify(topics));}
+}
+
+// ========== 渲染 ==========
+function renderTopics(){
+  const fs = document.getElementById('filter-status').value;
+  const fp = document.getElementById('filter-priority').value;
+  let list = topics;
+  if(fs!=='all') list=list.filter(t=>t.status===fs);
+  if(fp!=='all') list=list.filter(t=>t.priority===fp);
+  const el = document.getElementById('topic-list');
+  el.innerHTML = list.map(t=>`
+    <div class="topic-item">
+      <span class="pri pri-${t.priority}"></span>
+      <span class="title">${escHtml(t.title)} <span style="color:#555;font-size:11px;">${t.category||''}</span></span>
+      <span class="status ts-${t.status}">${statusLabels[t.status]||t.status}</span>
+      <span class="actions">
+        <button onclick="moveTopic(${t.id},'planned')" title="待规划">📋</button>
+        <button onclick="moveTopic(${t.id},'shooting')" title="拍摄中">🎬</button>
+        <button onclick="moveTopic(${t.id},'cutting')" title="剪辑中">✂️</button>
+        <button onclick="moveTopic(${t.id},'reviewing')" title="待发布">✅</button>
+        <button onclick="moveTopic(${t.id},'done')" title="已发布">🚀</button>
+        <button onclick="deleteTopic(${t.id})" style="color:#f87171;">🗑️</button>
+      </span>
+    </div>
+  `).join('');
+  document.getElementById('topic-count-badge').textContent='共 '+topics.length+' 个';
+}
+
+
+// ===== 选题详情弹窗 =====
+function openTopicDetail(id){
+  const t = topics.find(x=>x.id===id);
+  if(!t) return;
+  const notes = t.notes||'';
+  const statusOpts = ['planned','shooting','cutting','reviewing','done'];
+  const statusLabelsM = {'planned':'📋 待规划','shooting':'🎬 拍摄中','cutting':'✂️ 剪辑中','reviewing':'✅ 待发布','done':'🚀 已发布'};
+  const priLabelsM = {'high':'🔴 高优先级','mid':'🟡 中优先级','low':'⚪ 低优先级'};
+  const catOpts = ['穿搭','护肤','美妆','美业','探店','好物','生活方式','护发','其他'];
+  const catOptStr = catOpts.map(c => `<option value="${c}" ${c===t.category?'selected':''}>${c}</option>`).join('');
+
+  document.getElementById('topic-detail-content').innerHTML = `
+    <div class="modal-header">
+      <h2>${escHtml(t.title)}</h2>
+      <button class="modal-close" onclick="closeTopicDetail()">&times;</button>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">状态</div>
+      <div class="detail-value">
+        <select id="dd-status">
+          ${statusOpts.map(s => `<option value="${s}" ${s===t.status?'selected':''}>${statusLabelsM[s]}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">优先级</div>
+      <div class="detail-value">
+        <select id="dd-priority">
+          ${['high','mid','low'].map(p => `<option value="${p}" ${p===t.priority?'selected':''}>${priLabelsM[p]}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">分类</div>
+      <div class="detail-value"><select id="dd-category">${catOptStr}</select></div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">排期</div>
+      <div class="detail-value"><input type="date" id="dd-date" value="${t.date||''}"></div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">备注</div>
+      <div class="detail-value"><textarea id="dd-notes" placeholder="拍摄思路、素材链接、合作信息...">${escHtml(notes)}</textarea></div>
+    </div>
+    <div class="detail-actions">
+      ${statusOpts.map(s => `<button class="btn-${s}" onclick="quickMove(${t.id},'${s}')">${statusLabelsM[s].split(' ')[1]||s}</button>`).join('')}
+      <button class="btn-save" onclick="saveTopicDetail(${t.id})">💾 保存修改</button>
+      <button class="btn-danger" onclick="deleteTopic(${t.id});closeTopicDetail();renderAll();">🗑️ 删除</button>
+    </div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid #2a2a3e;">
+      <div style="color:#888;font-size:12px;margin-bottom:8px;">🔍 搜索参考视频</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="https://www.douyin.com/search/${encodeURIComponent(t.title)}" target="_blank" style="background:#161823;color:#fff;padding:6px 14px;border-radius:8px;text-decoration:none;font-size:12px;">🎵 抖音</a>
+        <a href="https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(t.title)}" target="_blank" style="background:#ff2442;color:#fff;padding:6px 14px;border-radius:8px;text-decoration:none;font-size:12px;">📕 小红书</a>
+        <a href="https://search.bilibili.com/all?keyword=${encodeURIComponent(t.title)}" target="_blank" style="background:#fb7299;color:#fff;padding:6px 14px;border-radius:8px;text-decoration:none;font-size:12px;">📺 B站</a>
+        <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(t.title + ' 美业 穿搭')}" target="_blank" style="background:#cc0000;color:#fff;padding:6px 14px;border-radius:8px;text-decoration:none;font-size:12px;">▶️ YouTube</a>
+      </div>
+    </div>
+  `;
+  document.getElementById('topic-detail-modal').classList.add('show');
+}
+
+function closeTopicDetail(){
+  document.getElementById('topic-detail-modal').classList.remove('show');
+}
+
+function saveTopicDetail(id){
+  const t = topics.find(x=>x.id===id);
+  if(!t) return;
+  t.status = document.getElementById('dd-status').value;
+  t.priority = document.getElementById('dd-priority').value;
+  t.category = document.getElementById('dd-category').value;
+  t.date = document.getElementById('dd-date').value;
+  t.notes = document.getElementById('dd-notes').value;
+  localStorage.setItem('mw_topics',JSON.stringify(topics));
+  renderAll();
+  const toast = document.getElementById('saved-toast');
+  toast.textContent = '✅ 已保存「'+t.title+'」';
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'),2000);
+}
+
+function quickMove(id,status){
+  const t = topics.find(x=>x.id===id);
+  if(t){ t.status=status; localStorage.setItem('mw_topics',JSON.stringify(topics)); renderAll(); }
+  document.getElementById('dd-status').value = status;
+}
+
+document.getElementById('topic-detail-modal').addEventListener('click',function(e){
+  if(e.target===this) closeTopicDetail();
+});
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeTopicDetail(); });
+
+function renderKanban(){
+  ['planned','shooting','cutting','reviewing','done'].forEach(st=>{
+    const items = topics.filter(t=>t.status===st);
+    const el = document.querySelector(`.kanban-items[data-status="${st}"]`);
+    if(!el) return;
+    el.innerHTML = items.map(t=>`
+      <div class="kanban-item" draggable="true" data-id="${t.id}" data-status="${st}" onclick="openTopicDetail(${t.id})">
+        <div class="ki-title">${escHtml(t.title)}</div>
+        <div class="ki-meta"><span>${priLabels[t.priority]||''}</span><span>${t.category||''}</span></div>
+      </div>
+    `).join('');
+  });
+  // drag events
+  document.querySelectorAll('.kanban-item').forEach(el=>{
+    el.addEventListener('dragstart',e=>{
+      e.dataTransfer.setData('text/plain',el.dataset.id);
+      el.style.opacity='0.4';
+    });
+    el.addEventListener('dragend',e=>{el.style.opacity='1';});
+  });
+  document.querySelectorAll('.kanban-items').forEach(el=>{
+    el.addEventListener('dragover',e=>e.preventDefault());
+    el.addEventListener('drop',e=>{
+      e.preventDefault();
+      const id=parseInt(e.dataTransfer.getData('text/plain'));
+      const newStatus=el.dataset.status;
+      moveTopic(id,newStatus);
+      renderAll();
+    });
+  });
+}
+
+function renderDashboard(){
+  document.getElementById('m-topic-count').textContent=topics.length;
+  document.getElementById('m-shooting-count').textContent=topics.filter(t=>t.status==='shooting').length;
+  document.getElementById('m-review-count').textContent=topics.filter(t=>t.status==='reviewing').length;
+  const recent = [...topics].sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999')).slice(0,5);
+  document.getElementById('recent-topics').innerHTML = recent.map(t=>`
+    <tr><td>${escHtml(t.title)}</td><td><span class="status ts-${t.status}">${statusLabels[t.status]||t.status}</span></td><td>${priLabels[t.priority]||''}</td><td>${t.date||'-'}</td></tr>
+  `).join('');
+}
+
+
+
+// ===== 数据分析 =====
+function generateAnalysis(){
+  const el = document.getElementById('analysis-content');
+  if(!el) return;
+  if(!dayData || dayData.length < 3){
+    el.innerHTML = '<p style="color:#888;">📥 请先在数据中心粘贴数据，自动生成分析建议</p>';
+    return;
+  }
+  
+  const recent = dayData.slice(0, 7);
+  const total = {p:0,l:0,c:0,s:0,f:0};
+  recent.forEach(d => { total.p+=d.p; total.l+=d.l; total.c+=d.c; total.s+=d.s; total.f+=d.f; });
+  const avg = {p:Math.round(total.p/recent.length),l:Math.round(total.l/recent.length),c:Math.round(total.c/recent.length),s:Math.round(total.s/recent.length),f:Math.round(total.f/recent.length)};
+  
+  // 找最好的一天
+  const best = recent.reduce((a,b) => a.p > b.p ? a : b);
+  // 找分享率最高的一天
+  const bestShare = recent.reduce((a,b) => (b.p>0 ? b.s/b.p : 0) > (a.p>0 ? a.s/a.p : 0) ? b : a);
+  
+  let html = '';
+  
+  // 整体趋势
+  if(recent.length >= 3){
+    const first3 = recent.slice(-3);
+    const last3 = recent.slice(0, 3);
+    const avgFirst = first3.reduce((s,d)=>s+d.p,0)/first3.length;
+    const avgLast = last3.reduce((s,d)=>s+d.p,0)/last3.length;
+    const trend = avgLast > avgFirst ? '📈 上升' : '📉 下降';
+    const trendPct = Math.round(Math.abs(avgLast-avgFirst)/avgFirst*100);
+    html += '<div style="margin-bottom:12px;"><strong>📊 播放趋势</strong>：' + trend + ' ' + trendPct + '%</div>';
+  }
+  
+  html += '<div style="margin-bottom:12px;"><strong>🔥 最佳表现</strong>：' + best.d + ' 播放 ' + best.p + '，点赞 ' + best.l + '</div>';
+  
+  // 分享率分析
+  const shareRate = recent.map(d => ({d:d.d, r:d.p>0 ? (d.s/d.p*100).toFixed(1) : 0}));
+  const avgShareRate = shareRate.reduce((s,x)=>s+parseFloat(x.r),0)/shareRate.length;
+  html += '<div style="margin-bottom:12px;"><strong>🔄 分享率</strong>：平均 ' + avgShareRate.toFixed(1) + '%';
+  if(avgShareRate > 5) html += ' ✅ 不错！';
+  else if(avgShareRate > 2) html += ' 👌 正常水平';
+  else html += ' 📉 需要提升';
+  html += '</div>';
+  
+  // 建议
+  html += '<div style="background:#1a1a2e;border-radius:10px;padding:14px;margin-top:8px;">';
+  html += '<strong>💡 优化建议</strong><ul style="margin:8px 0 0 0;padding-left:20px;line-height:1.8;">';
+  
+  if(avgShareRate < 3) html += '<li>分享率偏低，尝试在视频末尾加"转发给需要的朋友"引导话术</li>';
+  if(avg.l < 10) html += '<li>点赞数不高，可以尝试在评论区置顶互动问题，引导点赞</li>';
+  if(recent[0] && recent[0].f === 0) html += '<li>昨日净增关注为0，建议在视频中增加关注引导</li>';
+  
+  // 对比最好的一天
+  const bestDay = recent.reduce((a,b) => (a.p/a.f || 999) < (b.p/b.f || 999) ? a : b);
+  html += '<li>最佳日(' + bestDay.d + ')播放 ' + bestDay.p + '，分析那天视频的内容特点，复制成功模式</li>';
+  html += '<li>关注选题池中的高优先级选题，保持每周3-5条更新频率</li>';
+  
+  // 每日 avg
+  html += '<li>日均播放 ' + avg.p + '，日均点赞 ' + avg.l + '，日均分享 ' + avg.s + '</li>';
+  
+  html += '</ul></div>';
+  
+  el.innerHTML = html;
+}
+
+// 在数据更新后触发分析
+const origApply = window.applyPastedData;
+if(origApply){
+  window.applyPastedData = function(){
+    origApply();
+    setTimeout(generateAnalysis, 500);
+  };
+}
+
+// 页面加载后执行
+setTimeout(generateAnalysis, 500);
+
+// ===== 粘贴更新数据 =====
+function applyPastedData(){
+  const raw = document.getElementById('paste-data-input').value.trim();
+  if(!raw){ showToast('⚠️ 请先粘贴数据'); return; }
+  
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch(e) {
+    showToast('❌ JSON 解析失败，请检查粘贴内容');
+    return;
+  }
+  
+  // 尝试解析表格数据
+  let newData = [];
+  if(Array.isArray(parsed)){
+    // 可能是 [{cols:[...], rows:[...]}]
+    for(const table of parsed){
+      if(table.cols && table.rows){
+        // 找日期、播放、点赞这些列
+        const colNames = table.cols.map(c => c.trim());
+        const dateIdx = colNames.findIndex(c => c.includes('时间') || c.includes('日期'));
+        const playIdx = colNames.findIndex(c => c.includes('播放'));
+        const likeIdx = colNames.findIndex(c => c.includes('赞') && !c.includes('评论') && !c.includes('分享'));
+        const commentIdx = colNames.findIndex(c => c.includes('评论'));
+        const shareIdx = colNames.findIndex(c => c.includes('分享'));
+        const followIdx = colNames.findIndex(c => c.includes('关注'));
+        
+        if(dateIdx >= 0){
+          for(const row of table.rows){
+            const d = row[dateIdx]?.trim();
+            if(!d) continue;
+            // 日期格式化: 2026/07/07 -> 07/07
+            let dateStr = d;
+            if(d.includes('/')){
+              const parts = d.split('/');
+              dateStr = parts[parts.length-2].padStart(2,'0')+'/'+parts[parts.length-1].padStart(2,'0');
+            }
+            const entry = {d:dateStr, p:0, l:0, c:0, s:0, f:0};
+            if(playIdx>=0) entry.p = parseInt(row[playIdx]) || 0;
+            if(likeIdx>=0) entry.l = parseInt(row[likeIdx]) || 0;
+            if(commentIdx>=0) entry.c = parseInt(row[commentIdx]) || 0;
+            if(shareIdx>=0) entry.s = parseInt(row[shareIdx]) || 0;
+            if(followIdx>=0) entry.f = parseInt(row[followIdx]) || 0;
+            newData.push(entry);
+          }
+        }
+      }
+    }
+  }
+  
+  if(newData.length === 0){
+    // 尝试直接解析为 [{d:'',p:0,l:0,c:0,s:0,f:0}] 格式
+    try {
+      const direct = typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+      if(Array.isArray(direct) && direct[0] && direct[0].d !== undefined){
+        newData = direct;
+      }
+    } catch(e) {}
+  }
+  
+  if(newData.length === 0){
+    showToast('❌ 无法识别数据格式。请确保复制的是视频号助手的表格数据');
+    return;
+  }
+  
+  // 按日期排序（最新在前）
+  newData.sort((a,b) => {
+    const da = a.d.split('/').map(Number);
+    const db = b.d.split('/').map(Number);
+    return (db[0]*100+db[1]) - (da[0]*100+da[1]);
+  });
+  
+  // 去重（保留最新）
+  const seen = new Set();
+  dayData = newData.filter(e => {
+    const key = e.d;
+    if(seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  
+  localStorage.setItem('mw_daydata', JSON.stringify(dayData));
+  renderDataTable();
+  updateDataSummary();
+  showToast('✅ 已更新 ' + dayData.length + ' 天数据！');
+}
+
+function updateDataSummary(){
+  // 更新数据中心概览
+  if(dayData.length === 0) return;
+  const total = {p:0,l:0,c:0,s:0,f:0};
+  dayData.forEach(d => {
+    total.p += d.p; total.l += d.l; total.c += d.c; total.s += d.s; total.f += d.f;
+  });
+  const avg = {p:Math.round(total.p/dayData.length),l:Math.round(total.l/dayData.length),c:Math.round(total.c/dayData.length),s:Math.round(total.s/dayData.length),f:Math.round(total.f/dayData.length)};
+  
+  document.getElementById('card-total-play').textContent = total.p.toLocaleString();
+  document.getElementById('card-avg-play').textContent = avg.p;
+  document.getElementById('card-total-like').textContent = total.l;
+  document.getElementById('card-avg-like').textContent = avg.l;
+  document.getElementById('card-total-share').textContent = total.s;
+  document.getElementById('card-total-follow').textContent = total.f;
+}
+
+function showToast(msg){
+  let t = document.getElementById('data-toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'data-toast';
+    t.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#166534;color:#86efac;padding:10px 24px;border-radius:10px;font-size:14px;z-index:2000;opacity:0;transition:opacity.3s;pointer-events:none;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  setTimeout(()=>t.style.opacity='0', 2500);
+}
+
+// 页面加载后更新数据摘要
+setTimeout(updateDataSummary, 100);
+
+function renderDataTable(){
+  const el = document.getElementById('data-table');
+  el.innerHTML = dayData.map(d=>`
+    <tr><td>${d.d}</td><td style="color:#818cf8;">${d.p}</td><td style="color:#fbbf24;">${d.l}</td><td style="color:#f87171;">${d.c}</td><td style="color:#60a5fa;">${d.s}</td><td style="color:#f472b6;">${d.f}</td></tr>
+  `).join('');
+}
+
+function renderCalendar(){
+  const year=2026,month=6;
+  document.getElementById('cal-month-label').textContent = year+'年'+(month+1)+'月';
+  const first=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const today=new Date();
+  let html='<div class="weekday">日</div><div class="weekday">一</div><div class="weekday">二</div><div class="weekday">三</div><div class="weekday">四</div><div class="weekday">五</div><div class="weekday">六</div>';
+  for(let i=0;i<first;i++) html+='<div></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const datestr = year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const has = topics.some(t=>t.date===datestr);
+    const isToday = today.getFullYear()===year && today.getMonth()===month && today.getDate()===d;
+    html+=`<div class="day ${has?'has':''} ${isToday?'today':''}">${d}</div>`;
+  }
+  document.getElementById('calendar-grid').innerHTML=html;
+
+  // 排期列表
+  const scheduled = topics.filter(t=>t.date).sort((a,b)=>a.date.localeCompare(b.date));
+  document.getElementById('calendar-list').innerHTML = scheduled.map(t=>`
+    <tr><td>${t.date}</td><td>${escHtml(t.title)}</td><td><span class="status ts-${t.status}">${statusLabels[t.status]||t.status}</span></td></tr>
+  `).join('');
+}
+
+function renderAll(){
+  renderTopics();
+  renderKanban();
+  renderDashboard();
+  renderDataTable();
+}
+renderAll();
+
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
