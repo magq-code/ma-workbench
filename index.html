@@ -169,7 +169,7 @@ td{padding:8px 6px;border-bottom:1px solid #1f1f2a;}
   <div class="tab-page active" id="tab-dashboard">
     <div class="page-header">
       <h2>📊 工作台总览</h2>
-      <span class="badge">📅 06-06 至 07-05</span>
+      <span class="badge" id="date-range-badge">📅 06/29 至 07/06</span>
     </div>
 
     <!-- 快捷指标 -->
@@ -304,11 +304,19 @@ td{padding:8px 6px;border-bottom:1px solid #1f1f2a;}
         </div>
         <div style="background:#1a1a2e;border-radius:10px;padding:12px;text-align:center;">
           <div style="color:#818cf8;font-size:22px;font-weight:bold;" id="card-avg-play">0</div>
-          <div style="color:#888;font-size:12px;margin-top:4px;">日均播放</div>
-        </div>
         <div style="background:#1a1a2e;border-radius:10px;padding:12px;text-align:center;">
           <div style="color:#fbbf24;font-size:22px;font-weight:bold;" id="card-total-like">0</div>
           <div style="color:#888;font-size:12px;margin-top:4px;">总点赞</div>
+        </div>
+          <div style="color:#888;font-size:12px;margin-top:4px;">日均播放</div>
+        </div>
+        <div style="background:#1a1a2e;border-radius:10px;padding:12px;text-align:center;">
+          <div style="color:#fbbf24;font-size:22px;font-weight:bold;" >0</div>
+          <div style="color:#888;font-size:12px;margin-top:4px;">总点赞</div>
+        </div>
+        <div style="background:#1a1a2e;border-radius:10px;padding:12px;text-align:center;">
+          <div style="color:#fbbf24;font-size:22px;font-weight:bold;" id="card-avg-like">0</div>
+          <div style="color:#888;font-size:12px;margin-top:4px;">日均点赞</div>
         </div>
         <div style="background:#1a1a2e;border-radius:10px;padding:12px;text-align:center;">
           <div style="color:#60a5fa;font-size:22px;font-weight:bold;" id="card-total-share">0</div>
@@ -348,187 +356,87 @@ td{padding:8px 6px;border-bottom:1px solid #1f1f2a;}
 
 
   <!-- ====== TAB: 更新数据 ====== -->
-  <div class="tab-page" id="tab-paste">
-    <div class="page-header">
-      <h2>📥 更新数据</h2>
-      <span class="badge">3步搞定</span>
-    </div>
-    <div class="card">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-        <div style="background:#4f46e5;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">1</div>
-        <div><div style="font-weight:600;color:#fff;">打开视频号助手 → 数据中心</div><div style="color:#888;font-size:12px;">确保显示30天数据表格</div></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-        <div style="background:#4f46e5;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">2</div>
-        <div><div style="font-weight:600;color:#fff;">按 F12 → Console → 粘贴代码回车</div><div style="color:#888;font-size:12px;">复制下方代码</div></div>
-      </div>
-      <pre style="background:#1a1a2e;border:1px solid #2a2a3e;border-radius:8px;padding:14px;font-size:12px;color:#a5b4fc;overflow-x:auto;white-space:pre-wrap;word-break:break-all;user-select:all;margin-bottom:16px;">copy(document.body.innerText)</pre>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-        <div style="background:#4f46e5;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">3</div>
-        <div><div style="font-weight:600;color:#fff;">粘贴下面 → 点"解析更新"</div><div style="color:#888;font-size:12px;">自动填入工作台</div></div>
-      </div>
-      <textarea id="paste-data-input" placeholder="Ctrl+V 粘贴数据..." style="width:100%;background:#1a1a2e;border:1px solid #2a2a3e;border-radius:8px;padding:12px;color:#ddd;font-size:13px;min-height:100px;resize:vertical;font-family:monospace;box-sizing:border-box;"></textarea>
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <button onclick="applyPastedData()" style="background:#4f46e5;color:#fff;border:none;border-radius:8px;padding:10px 24px;cursor:pointer;font-size:14px;">📊 解析更新</button>
-        <button onclick="document.getElementById('paste-data-input').value=''" style="background:#3a3a4e;color:#bbb;border:none;border-radius:8px;padding:10px 24px;cursor:pointer;font-size:14px;">清空</button>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ====== TAB: 复盘建议 ====== -->
+    <!-- ====== TAB: 复盘建议 ====== -->
   <div class="tab-page" id="tab-review">
     <div class="page-header">
       <h2>🔍 数据复盘建议</h2>
-      <span class="badge" id="review-period">06-29 至 07-05</span>
+      <span class="badge">近7天 06/30 至 07/06</span>
       <button class="btn btn-sm btn-outline" onclick="refreshReview()" style="margin-left:auto;">🔄 刷新复盘</button>
     </div>
-
-    <!-- 综合评分 -->
+    <div id="analysis-content"></div>
     <div class="card" style="display:flex;gap:20px;flex-wrap:wrap;">
       <div style="text-align:center;min-width:120px;">
-        <div class="review-score">7.5</div>
+        <div class="review-score">6.5</div>
         <div style="font-size:11px;color:#666;margin-top:4px;">/ 10 综合健康分</div>
       </div>
       <div style="flex:1;">
         <div style="font-size:14px;font-weight:600;margin-bottom:8px;">📈 内容质量上升，但流量承压</div>
-        <div style="font-size:12px;color:#888;line-height:1.6;">完播 +30%、分享 +80% 说明内容质量明显进步，社交传播力爆发。但推流不稳定导致播放 -24%，需要稳定更新节奏 + 优化前3秒完播率。</div>
+        <div style="font-size:12px;color:#888;line-height:1.6;">完播率0.33%，播放-49%。近7天峰值3370，最低698，波动较大。建议固定更新节奏，优化前3秒完播率。</div>
       </div>
     </div>
 
-    <!-- 核心指标 -->
     <div class="card">
       <h3>📊 核心指标诊断</h3>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;">
-        <div style="background:#0f0f13;border-radius:10px;padding:10px;">
-          <div style="font-size:11px;color:#888;">播放</div>
-          <div style="font-size:18px;font-weight:700;color:#818cf8;">2.9万</div>
-          <div><span class="review-badge red">↓ 23.88%</span> <span style="font-size:11px;color:#888;">⚠️预警</span></div>
-        </div>
-        <div style="background:#0f0f13;border-radius:10px;padding:10px;">
-          <div style="font-size:11px;color:#888;">完播</div>
-          <div style="font-size:18px;font-weight:700;color:#34d399;">260</div>
-          <div><span class="review-badge green">↑ 30.65%</span> <span style="font-size:11px;color:#888;">🟢优秀</span></div>
-        </div>
-        <div style="background:#0f0f13;border-radius:10px;padding:10px;">
-          <div style="font-size:11px;color:#888;">分享</div>
-          <div style="font-size:18px;font-weight:700;color:#60a5fa;">343</div>
-          <div><span class="review-badge green">↑ 80.52%</span> <span style="font-size:11px;color:#888;">🟢卓越</span></div>
-        </div>
-        <div style="background:#0f0f13;border-radius:10px;padding:10px;">
-          <div style="font-size:11px;color:#888;">评论</div>
-          <div style="font-size:18px;font-weight:700;color:#f87171;">45</div>
-          <div><span class="review-badge red">↓ 13.47%</span> <span style="font-size:11px;color:#888;">🔴薄弱</span></div>
-        </div>
-        <div style="background:#0f0f13;border-radius:10px;padding:10px;">
-          <div style="font-size:11px;color:#888;">关注</div>
-          <div style="font-size:18px;font-weight:700;color:#f472b6;">53</div>
-          <div><span class="review-badge green">↑ 51.42%</span> <span style="font-size:11px;color:#888;">🟢良好</span></div>
-        </div>
-        <div style="background:#0f0f13;border-radius:10px;padding:10px;">
-          <div style="font-size:11px;color:#888;">关注者</div>
-          <div style="font-size:18px;font-weight:700;color:#fbbf24;">493</div>
-          <div><span class="review-badge yellow">离认证差7人</span></div>
-        </div>
+
+        <div style="background:#0f0f13;border-radius:10px;padding:10px;"><div style="font-size:11px;color:#888;">播放</div><div style="font-size:18px;font-weight:700;color:#818cf8;">10,310</div><div><span class="review-badge red">📉 49.1%</span></div></div>
+
+        <div style="background:#0f0f13;border-radius:10px;padding:10px;"><div style="font-size:11px;color:#888;">完播</div><div style="font-size:18px;font-weight:700;color:#34d399;">34</div><div><span class="review-badge green">0.3%完播率</span></div></div>
+
+        <div style="background:#0f0f13;border-radius:10px;padding:10px;"><div style="font-size:11px;color:#888;">分享</div><div style="font-size:18px;font-weight:700;color:#60a5fa;">215</div><div><span class="review-badge red">📉 75.7%</span></div></div>
+
+        <div style="background:#0f0f13;border-radius:10px;padding:10px;"><div style="font-size:11px;color:#888;">评论</div><div style="font-size:18px;font-weight:700;color:#f87171;">34</div><div><span class="review-badge red">📉 64.0%</span></div></div>
+
+        <div style="background:#0f0f13;border-radius:10px;padding:10px;"><div style="font-size:11px;color:#888;">点赞</div><div style="font-size:18px;font-weight:700;color:#fbbf24;">69</div><div><span class="review-badge red">📉 46.8%</span></div></div>
+
+        <div style="background:#0f0f13;border-radius:10px;padding:10px;"><div style="font-size:11px;color:#888;">关注</div><div style="font-size:18px;font-weight:700;color:#f472b6;">17</div><div><span class="review-badge red">📉 18.2%</span></div></div>
+
       </div>
+
+      <div style="margin-top:8px;font-size:12px;color:#888;"><b>当前关注者:</b> 510 &nbsp;|&nbsp; <b>离500认证:</b> ✅ 已达成！</div>
+
     </div>
 
-    <!-- 转化漏斗 -->
     <div class="card">
       <h3>🔁 转化漏斗分析（近7天）</h3>
       <div class="funnel">
-        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">曝光播放</span><div class="funnel-bar" style="width:100%;">10,132 (100%)</div></div>
-        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">→ 完播</span><div class="funnel-bar warn" style="width:12%;">89 (0.88%)</div></div>
-        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">→ 点赞</span><div class="funnel-bar ok" style="width:10%;">67 (0.66%)</div></div>
-        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">→ 评论</span><div class="funnel-bar warn" style="width:5%;">31 (0.31%)</div></div>
-        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">→ 分享</span><div class="funnel-bar great" style="width:25%;">225 (2.22%)</div></div>
-        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">→ 关注</span><div class="funnel-bar warn" style="width:3%;">16 (0.16%)</div></div>
+        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">曝光播放</span><div class="funnel-bar" style="width:100%;">10,310 (100%)</div></div>
+        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">→ 完播</span><div class="funnel-bar warn" style="width:3%">34 (0.33%)</div></div>
+        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">→ 点赞</span><div class="funnel-bar ok" style="width:68%">69 (203%完播后)</div></div>
+        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">→ 评论</span><div class="funnel-bar warn" style="width:33%">34 (100%完播后)</div></div>
+        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">→ 分享</span><div class="funnel-bar great" style="width:100%">215 (632%完播后)</div></div>
+        <div class="funnel-row"><span style="width:80px;font-size:11px;color:#888;">→ 关注</span><div class="funnel-bar warn" style="width:16%">17 (0.16%)</div></div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;font-size:11px;color:#888;">
-        <span>完播后点赞率 <b style="color:#34d399;">75%</b> 🟢</span>
-        <span>完播后分享率 <b style="color:#c084fc;">253%</b> 🚀</span>
-        <span>完播后评论率 <b style="color:#fbbf24;">35%</b> 🟡</span>
-        <span>关注转化率 <b style="color:#f87171;">0.18%</b> 🔴</span>
+        <span>完播后点赞率 <b style="color:#34d399;">203%</b></span>
+        <span>完播后分享率 <b style="color:#c084fc;">632%</b></span>
+        <span>完播后评论率 <b style="color:#34d399;">100%</b></span>
+        <span>关注转化率 <b style="color:#f87171;">0.16%</b></span>
       </div>
     </div>
 
-    <!-- 行动建议 -->
     <div class="card">
       <h3>🎯 行动建议（按优先级）</h3>
 
-      <div class="advice-card p0">
-        <h4><span class="tag p0">P0 紧急</span> 🏁 冲500关注，完成认证</h4>
-        <p>目前493关注，差7人即可申请认证。认证后平台推荐权重会提升。未来2-3条视频末尾明确引导"点关注支持"。</p>
-        <a href="#" class="action-btn" onclick="switchTab('topics')">📋 去选题池安排</a>
-      </div>
-
-      <div class="advice-card p0">
-        <h4><span class="tag p0">P0 紧急</span> 🔎 复盘7/1爆款视频</h4>
-        <p>7/1单日播放3370、分享105，是日均值的3-5倍。找出那条视频的主题、时长、开头3秒、封面风格，复制成功要素。</p>
-      </div>
-
-      <div class="advice-card p0">
-        <h4><span class="tag p0">P0 紧急</span> ⏱ 优化视频前3秒</h4>
-        <p>完播率仅0.88%，100人只有不到1人看完。前3秒一定要有强钩子：直接展示结果/抛出问题/最吸睛的画面。</p>
-      </div>
-
-      <div class="advice-card p1">
-        <h4><span class="tag p1">P1 重要</span> 📅 固定更新节奏</h4>
-        <p>播放量从7/1的3370持续下滑到7/5的698（跌幅79%）。建议每周至少3条，固定晚8-10点发布。</p>
-        <a href="#" class="action-btn" onclick="switchTab('calendar')">📅 去内容日历规划</a>
-      </div>
-
-      <div class="advice-card p1">
-        <h4><span class="tag p1">P1 重要</span> 💬 提升评论区互动</h4>
-        <p>日均仅1.5条评论。视频结尾加提问 + 评论区置顶话题 + 回复每一条评论，提升互动能增加推荐权重。</p>
-      </div>
-
-      <div class="advice-card p1">
-        <h4><span class="tag p1">P1 重要</span> 📦 做系列化内容提升关注</h4>
-        <p>138个视频仅493关注。做"7天搞定XX""3个技巧"系列内容，让用户追更，引导关注。</p>
-      </div>
-
-      <div class="advice-card p2">
-        <h4><span class="tag p2">P2 长期</span> 🔗 发挥分享优势做社交裂变</h4>
-        <p>分享+80%是最大亮点。多做对比测评、实用干货类选题，结尾引导"@你需要的朋友"。</p>
-      </div>
-
-      <div class="advice-card p2">
-        <h4><span class="tag p2">P2 长期</span> 🏠 优化个人主页</h4>
-        <p>关注转化率仅0.18%。完善简介、置顶优质视频、统一封面风格。</p>
-      </div>
-
-      <div class="advice-card p2">
-        <h4><span class="tag p2">P2 长期</span> 📊 每周导出数据监控趋势</h4>
-        <p>定期分析数据变化趋势，记录爆款特征，用数据指导内容方向。</p>
-      </div>
+      <div class="advice-card p0"><h4><span class="tag p0">P0 紧急</span> 🔎 分析爆款视频</h4><p>近7天最高单日播放3370，最低仅698，波动382%。分析爆款视频的主题、时长、开头3秒、封面风格。</p></div>
+      <div class="advice-card p0"><h4><span class="tag p0">P0 紧急</span> ⏱ 优化视频前3秒</h4><p>完播率仅0.33%，前3秒直接用强钩子：结果/问题/吸睛画面。</p></div>
+      <div class="advice-card p1"><h4><span class="tag p1">P1 重要</span> 📅 固定更新节奏</h4><p>播放从3370跌到698，建议每周至少3条，固定晚8-10点发布。</p><a href="#" class="action-btn" onclick="switchTab('calendar')">📅 去内容日历规划</a></div>
+      <div class="advice-card p1"><h4><span class="tag p1">P1 重要</span> 💬 提升评论区互动</h4><p>近7天共34条评论。视频结尾加提问 + 回复每一条。</p></div>
+      <div class="advice-card p1"><h4><span class="tag p1">P1 重要</span> 📦 做系列化内容提升关注</h4><p>做系列内容让用户产生追更欲望。</p></div>
+      <div class="advice-card p2"><h4><span class="tag p2">P2 长期</span> 🔗 发挥分享优势</h4><p>分享增长-76%！多做对比/干货/共鸣类内容，结尾引导‘@朋友’。</p></div>
+      <div class="advice-card p2"><h4><span class="tag p2">P2 长期</span> 🏠 优化个人主页</h4><p>完善简介、置顶优质视频、统一封面视觉风格。</p></div>
+      <div class="advice-card p2"><h4><span class="tag p2">P2 长期</span> 📊 每周数据监控</h4><p>定期分析趋势，用数据指导内容方向。本次更新：8天数据。</p></div>
     </div>
 
-    <!-- 7月目标 -->
     <div class="card">
       <h3>🎯 7月核心目标</h3>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;">
-        <div style="background:#0f0f13;border-radius:10px;padding:12px;border-left:3px solid #f87171;">
-          <div style="font-size:11px;color:#888;">本周 · 紧急</div>
-          <div style="font-size:14px;font-weight:700;margin:4px 0;">✅ 破500关注</div>
-          <div style="font-size:11px;color:#34d399;">完成认证申请</div>
-        </div>
-        <div style="background:#0f0f13;border-radius:10px;padding:12px;border-left:3px solid #fbbf24;">
-          <div style="font-size:11px;color:#888;">7月底 · 中期</div>
-          <div style="font-size:14px;font-weight:700;margin:4px 0;">📈 月播5万+</div>
-          <div style="font-size:11px;color:#34d399;">评论破100 · 关注破600</div>
-        </div>
-        <div style="background:#0f0f13;border-radius:10px;padding:12px;border-left:3px solid #818cf8;">
-          <div style="font-size:11px;color:#888;">3个月 · 长期</div>
-          <div style="font-size:14px;font-weight:700;margin:4px 0;">🎯 破1000关注</div>
-          <div style="font-size:11px;color:#34d399;">月播放稳定10万+</div>
-        </div>
+
+        <div style="background:#0f0f13;border-radius:10px;padding:12px;border-left:3px solid #fbbf24;"><div style="font-size:11px;color:#888;">7月底 · 中期</div><div style="font-size:14px;font-weight:700;margin:4px 0;">📈 月播5万+</div><div style="font-size:11px;color:#34d399;">评论破100 · 关注破600</div></div>
+        <div style="background:#0f0f13;border-radius:10px;padding:12px;border-left:3px solid #818cf8;"><div style="font-size:11px;color:#888;">3个月 · 长期</div><div style="font-size:14px;font-weight:700;margin:4px 0;">🎯 破1000关注</div><div style="font-size:11px;color:#34d399;">月播放稳定10万+</div></div>
       </div>
     </div>
-  </div>
-
-
-</div>
+  </div></div>
 
 <script>
 // ========== 数据 ==========
@@ -986,11 +894,19 @@ function renderCalendar(){
   `).join('');
 }
 
+function updateDateRange(){
+  var d = dayData;
+  if(d && d.length > 0){
+    var sorted = d.map(x=>x.d).sort();
+    document.getElementById('date-range-badge').textContent = '📅 ' + sorted[0] + ' 至 ' + sorted[sorted.length-1];
+  }
+}
 function renderAll(){
   renderTopics();
   renderKanban();
   renderDashboard();
   renderDataTable();
+  updateDateRange();
 }
 renderAll();
 
